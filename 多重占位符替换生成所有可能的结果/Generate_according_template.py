@@ -1,7 +1,38 @@
 import os
 from itertools import product
 from openpyxl import Workbook
+'''
+同目录下有一个 模版.txt 文件，内容有如：
+【地区】治疗【病种】医院排名
+等等
 
+遍历读取每一行，空行跳过。作为一个list。
+同目录下有一个 替换数据 文件夹，有多个txt文件
+【地区】.txt   
+【病种】.txt   
+
+分别读取每个txt的文件名，遍历读取里面每一行，如
+【地区】.txt   中是：
+济南
+石家庄
+长春
+
+【病种】.txt   中是：
+白癜风
+银屑病
+
+根据 替换数据 文件夹中的 'txt文件名'作为识别占位符，和‘txt内容’作为替换的内容 ，替换 模版.txt 中的 内容。
+
+济南治疗白癜风医院排名
+石家庄治疗白癜风医院排名
+长春治疗白癜风医院排名
+济南治疗银屑病医院排名
+石家庄治疗银屑病医院排名
+长春治疗银屑病医院排名
+
+所有替换完毕后，输出为  为excel
+
+'''
 # 1. 读取模版文件
 with open("模版.txt", "r", encoding="utf-8") as f:
     templates = [line.strip() for line in f if line.strip()]  # 去掉空行
@@ -28,12 +59,23 @@ for template in templates:
     # 找出模版中所有占位符
     placeholders = [ph for ph in replace_dict.keys() if ph in template]
 
-
     if not placeholders:
         results.append((template, template))  # 没有占位符，替换后与原模版相同
         continue
+
+    # 对占位符进行排序：先【地区】, 再【病种】，其他按原顺序
+    sorted_placeholders = []
+    if '【地区】' in placeholders:
+        sorted_placeholders.append('【地区】')
+    if '【病种】' in placeholders:
+        sorted_placeholders.append('【病种】')
+    for ph in placeholders:
+        if ph not in sorted_placeholders:
+            sorted_placeholders.append(ph)
+
+
     # replace_dict[ph]是list ，所以结果是[[],[],...]
-    lists_to_product = [replace_dict[ph] for ph in placeholders]
+    lists_to_product = [replace_dict[ph] for ph in sorted_placeholders]
 
     # product(*lists_to_product) 会生成 所有可能组合（笛卡尔积）：
     # 比如，3个list：地区list，等级，疾病
@@ -58,16 +100,15 @@ for template in templates:
         # for ph, val in ... → 循环解包元组，每次取一个占位符和对应的值。
         for ph, val in zip(placeholders, combo):
             temp = temp.replace(ph, val)
-        results.append((temp, template))  # 保存替换后的句子和原模版
+        # 保存替换后的句子，原模板，和每个占位符的值
+        results.append([temp, template, *combo])
 
 # 4. 输出到 Excel
-wb = Workbook()
-ws = wb.active
-# ws.title = "结果"
-# ws.append(["替换后句子", "原模版句子"])  # 表头
+wb = Workbook()#Workbook() 是 创建一个新的 Excel 工作簿（Workbook）。
+ws = wb.active#wb.active 获取当前活跃的工作表（默认是第一个 Sheet）。
 
-for replaced, original in results:
-    ws.append([replaced, original])
+for row in results:
+    ws.append(row)
 
 wb.save("output-模版输出结果.xlsx")
 print("生成完成，已保存为 output.xlsx")
