@@ -38,6 +38,7 @@ def get_baidu_rank(session, query, target_url):
         }
 
         try:
+            # params 会被 自动附加到 URL 的查询字符串部分
             response = session.get(BAIDU_URL, params=params, headers=headers, timeout=3)
             response.encoding = "utf-8"
             html = response.text
