@@ -41,11 +41,18 @@ with open("模版.txt", "r", encoding="utf-8") as f:
 replace_folder = "替换数据"
 replace_dict = {}
 
-for filename in os.listdir(replace_folder):
-    if filename.endswith(".txt"):
-        key = filename.replace(".txt", "")  # 占位符名，如 【地区】 或 【病种】
-        path = os.path.join(replace_folder, filename)
+# for filename in os.listdir(replace_folder):
+#     if filename.endswith(".txt"):
+#         key = filename.replace(".txt", "")  # 占位符名，如 【地区】 或 【病种】
+#         path = os.path.join(replace_folder, filename)
 
+
+# 改为目录下所有文件包括子文件都读取，
+for root, dirs, files in os.walk(replace_folder):
+    for filename in files:
+        if filename.endswith(".txt"):
+            key = filename.replace(".txt", "")  # 占位符名，如 【地区】 或 【病种】
+            path = os.path.join(root, filename)
         # open() 打开文件后会占用系统资源（文件句柄）。
         # 使用 with 可以确保在代码块执行完毕后自动关闭文件，无论期间是否出现异常。
         # 如果不使用 with，你必须手动调用 f.close()，否则可能导致文件一直被占用，尤其是大量文件时容易出错。
@@ -111,4 +118,4 @@ for row in results:
     ws.append(row)
 
 wb.save("output-模版输出结果.xlsx")
-print("生成完成，已保存为 output.xlsx")
+print("生成完成，已保存为 output-模版输出结果.xlsx")
